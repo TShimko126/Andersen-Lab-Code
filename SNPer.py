@@ -53,6 +53,8 @@ import string
 rsite2 = rsite.translate(string.maketrans('TAGC', 'ATCG'))
 rsite3 = rsite2[::-1]
 
+print rsite3
+
 #Get ready to write the output file
 import csv
 with open(strain+"_"+strain2+"_"+enzyme+".csv", 'w') as csvfile:
