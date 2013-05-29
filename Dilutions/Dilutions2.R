@@ -1,5 +1,3 @@
-library(R2HTML)
-
 miligrams = function(molweight, totalvol, milimol){
   x = milimol/1000
   x = x*molweight*totalvol
@@ -40,9 +38,10 @@ if (makeSol == "yes"){
   molMass = as.numeric(as.character(readline("What is the molecular weight of the compound?: ")))
   finalVol = as.numeric(as.character(readline("What is the final volume you would like to make? (in mL): ")))
   mgs = miligrams(molMass, finalVol, makeStock)
-  stockmake = paste("To make a", makeStock, "mM solution, dilute", mgs, "mg in", finalVol, "mL of", solvent, ".")
+  stockmake = paste("To make a", makeStock, "mM solution, dissolve", mgs, "mg in", finalVol, "mL of", solvent)
 }
 if (makeSol == "no"){
+  stockmake = "Already made"
   stock = as.numeric(readline("What is stock concentration? (in mM): "))
   stock = stock*1000
 }
@@ -54,15 +53,13 @@ date = Sys.Date()
 date = as.character(format(date, format = "%m%d%Y"))
 
 recipe = as.data.frame(makeDilute(dilutes,stock))
-colnames(recipe) = c("Diluent Type", "Final Concentration (µM)","S medium (µL)", paste(compound, "at", stock/1000, "mM"), "100 mg/mL Bacterial Lysate (µL)")
+colnames(recipe) = c("Diluent", "Conc. (µM)","S med. (µL)", paste(compound, "at", stock/1000, "mM"), "100 mg/mL Bact. Lysate (µL)")
 
-print(stockmake)
-print(recipe)
+saveRDS(stockmake,file="/Users/tylershimko/Andersen-Lab-Code/Dilutions/stockmake.rds")
+saveRDS(recipe,file="/Users/tylershimko/Andersen-Lab-Code/Dilutions/recipe.rds")
+saveRDS(compound,file="/Users/tylershimko/Andersen-Lab-Code/Dilutions/compound.rds")
 
-file = paste0(compound, "_", date)
-HTML.data.frame(recipe,file=)
-
-filename = paste0("/Users/tylershimko/Desktop/Dilutions/", compound, "_", date, ".txt")
-file.create(filename)
-capture.output(print(recipe, print.gap=3), file=filename)
+#filename = paste0("/Users/tylershimko/Desktop/Dilutions/", compound, "_", date, ".txt")
+#file.create(filename)
+#capture.output(print(recipe, print.gap=3), file=filename)
 #write.table(recipe, file = filename, sep = "\t")

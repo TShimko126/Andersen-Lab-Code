@@ -1,0 +1,24 @@
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width=200)
+```
+```{r, echo = FALSE}
+compound = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/compound.rds")
+```
+Dilution Sheet for `r compound`
+========================================================
+```{r, echo=FALSE}
+stockmake = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/stockmake.rds")
+recipe = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/recipe.rds")
+```
+Make master dilution:
+
+```{r, echo = FALSE}
+stockmake
+```
+
+Dilute down to final concentrations:
+
+```{r, echo = FALSE}
+recipe
+```
+
