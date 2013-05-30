@@ -9,16 +9,30 @@ Dilution Sheet for `r compound`
 ```{r, echo=FALSE}
 stockmake = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/stockmake.rds")
 recipe = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/recipe.rds")
+rawLysate = sum(as.numeric(as.character(recipe[,5])))
+rawSmed = sum(as.numeric(as.character(recipe[,3])))
+adjLysate = rawLysate * (1+(1/60))
+tot = adjLysate * 10
+adjSmed = tot - adjLysate
+slmix = paste("Dilute", adjLysate, "µL lysate in", adjSmed, "µL S medium.")
+for (i in seq(1,length(recipe))){
+  colnames(recipe)[i] = sprintf("%03s",colnames(recipe)[i])
+}
 ```
-Make master dilution:
+Make concentrated stock solution:
 
 ```{r, echo = FALSE}
 stockmake
 ```
 
+Make the S Medium/Lysate mix:
+```{r, echo = FALSE}
+slmix
+```
+
 Dilute down to final concentrations:
 
 ```{r, echo = FALSE}
-recipe
+recipe[,c(1,2,3,4,6)]
 ```
 
