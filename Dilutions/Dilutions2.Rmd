@@ -2,19 +2,32 @@
 options(width=200)
 ```
 ```{r, echo = FALSE}
-compound = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/compound.rds")
+#Get the compound name
+compound = readRDS("compound.rds")
 ```
 Dilution Sheet for `r compound`
 ========================================================
 ```{r, echo=FALSE}
-stockmake = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/stockmake.rds")
-recipe = readRDS("/Users/tylershimko/Andersen-Lab-Code/Dilutions/recipe.rds")
+#Determine whether a stock needs to be made
+stockmake = readRDS("stockmake.rds")
+#Get the recipe
+recipe = readRDS("recipe.rds")
+#See if the stock solution is contrated enough to make any of the dilutions
+brake = readRDS("brake.rds")
+#Convert the lysate mixture column to character to prevent rounding
+recipe[,3] = as.character(recipe[,3])
+
+#Get the raw amounts for the lysate and s medium
 rawLysate = sum(as.numeric(as.character(recipe[,5])))
 rawSmed = sum(as.numeric(as.character(recipe[,3])))
+
+#Adjust for pipetiing error (make a little extra)
 adjLysate = rawLysate * (1+(1/60))
 tot = adjLysate * 10
 adjSmed = tot - adjLysate
 slmix = paste("Dilute", adjLysate, "µL lysate in", adjSmed, "µL S medium.")
+
+#Space out the columns by adding spaces in the column titles
 for (i in seq(1,length(recipe))){
   colnames(recipe)[i] = sprintf("%03s",colnames(recipe)[i])
 }
@@ -33,6 +46,25 @@ slmix
 Dilute down to final concentrations:
 
 ```{r, echo = FALSE}
-recipe[,c(1,2,3,4,6)]
+if (brake == TRUE){
+  print("The stock dilution is not concentrated enough.")
+}
+if (brake == FALSE){
+  print(recipe[,c(1,2,3,4,6)])
+}
 ```
+
+Use higher stock (if necessary):
+
+```{r, echo = FALSE}
+if (file.exists("highRecipe.rds") == TRUE){
+  highRecipe = readRDS("highRecipe.rds")
+  highRecipe[,3] = as.character(highRecipe[,3])
+  print(highRecipe[,c(1,2,3,4,6)])
+}
+if (file.exists("highRecipe.rds") == FALSE){
+  print("Not necessary")
+}
+```
+
 
