@@ -1,14 +1,26 @@
-from Bio.Graphics import GenomeDiagram
-from Bio.SeqFeature import SeqFeature, FeatureLocation
-import urllib2, re, string, csv
+import urllib2, re, string, csv, os
+from rpy2.robjects import r as r
+from EnzymeGetter import getter as getter
+
 
 #Get position
 pos = raw_input("Enter your position/region of interest (Ex: V:9966404 or V:9966404..9976226): ")
+
 #Change : to .. for splitting in next line
 pos = re.sub(",", "", pos)
 pos = re.sub(":","..",pos)
 pos = pos.split("..")
 chrom = pos[0]
+
+
+#Write position data to csv
+file1 = open("positionlist.csv", "wb")
+writer1 = csv.writer(file1)
+lenpos = len(pos)
+for i in range(0,lenpos):
+	writer1.writerow([pos[i]])
+file1.close()
+
 #Determine if entered position data is a position or a region
 if len(pos) <= 2:
     position = True
@@ -24,7 +36,7 @@ if reg == True:
     downstream = int(pos[2])
 
 #Get enzyme list
-choice = raw_input("How would you like to choose restriction enzymes? (file/list): ")
+choice = raw_input("How would you like to choose restriction enzymes? (file/list/standards): ")
 if choice == "file":
     import tkFileDialog
     filename = tkFileDialog.askopenfilename()
@@ -32,14 +44,15 @@ if choice == "file":
     enz = enz.readline()
     enz = re.sub(" ","",enz)
     enz = enz.split(",")
+
 if choice == "list":    
     enz = raw_input("Which enzymes would you like to use? (Use proper capitalization, separate with commas): ")
     enz = re.sub(" ","",enz)
     enz = enz.split(",")
 
-print " "
-print "Loading restriction site information from Rebase..."
-print " "
+
+
+
 
 cutsites = {}
 
@@ -59,7 +72,15 @@ def cutFinder(enzList):
         cutsites[i] = rsite
 
 #Call function to get cut sites
-cutFinder(enz)
+if choice == "file" or choice == "list":
+	cutFinder(enz)
+
+if choice == "standards":
+	enz = getter()
+	for i in range(len(enz)):
+		cutsites[enz[i][0]] = enz[i][1]
+		
+print cutsites
 
 #Import SNP file and make first line (strain names) a list
 inSNP = open("SNPsetfixed.txt","r")
@@ -225,47 +246,74 @@ if position == True:
 
 #Find the closest snip-SNPs if a region is entered
 if reg == True:
-    writer = csv.writer(open("cutsiteslist.csv", "wb"))
-    writer.writerow(["Enzyme", "Position"])
-    upst = []
-    downst = []
-    for element in snppr:
-        distup = int(element[2]) - int(upstream)
-        distdown = int(element[2]) - int(downstream)
-        distanceup.append(distup)
-        distancedown.append(distdown)
-    for i in distanceup: 
-        if i < 0:
-            upst.append(i)
-            upst2 = upst
-            upst2.sort(reverse = True)
-    for i in distancedown: 
-        if i > 0:
-            downst.append(i)
-            downst2 = downst
-            downst2.sort()
+ file = open("cutsiteslist.csv", "wb")
+ writer = csv.writer(file)
+ writer.writerow(["Enzyme", "Position"])
+ upst = []
+ downst = []
+ for element in snppr:
+	 print "element", element
+	 distup = int(element[2]) - int(upstream)
+	 print "distup", distup
+	 distdown = int(element[2]) - int(downstream)
+	 print "distdown", distdown
+	 distanceup.append(distup)
+	 distancedown.append(distdown)
+ for i in distanceup: 
+	 if i < 0:
+		 upst.append(i)
+		 upst2 = upst
+		 upst2.sort(reverse = True)
+ for i in distancedown: 
+	 if i > 0:
+		 downst.append(i)
+		 downst2 = downst
+		 downst2.sort()
+ print ""		 
+ print "upst", upst
+ print ""
+ print "downst", downst
+ print ""
+ for i in range(5):
+	 upper = distanceup.index(upst2[i])
+	 print "upper", upper
+	 print ""
+	 downer = distancedown.index(downst2[i])
+	 print "downer", downer
+	 print ""
+	 print "snppr[upper]", snppr[upper]
+	 print ""
+	 print "snppr[downer]", snppr[downer]
+	 print ""
+	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+	
+ file.close()
 
-    for i in range(5):
-        upper = distanceup.index(upst2[i])
-        downer = distancedown.index(downst2[i])
-        writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
-        writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
-        
-    
-    
-    #upbound = distanceup.index(max(upst))
-    #downbound = distancedown.index(min(downst))
+ upbound = distanceup.index(max(upst))
+ downbound = distancedown.index(min(downst))
     
     
     
-    #print ""
-    #print "The closest upstream snip-SNP is located at position " + str(snppr[upbound][1]) + ":" + str(snppr[upbound][2]) + " and is cut by " + str(snppr[upbound][0]) +"."
-    #print "The closest downstream snip-SNP is located at position " + str(snppr[downbound][1]) + ":" + str(snppr[downbound][2]) + " and is cut by " + str(snppr[downbound][0]) +"."
-    #print ""
-    
-    
+ print ""
+ print "The closest upstream snip-SNP is located at position " + str(snppr[upbound][1]) + ":" + str(snppr[upbound][2]) + " and is cut by " + str(snppr[upbound][0]) +"."
+ print "The closest downstream snip-SNP is located at position " + str(snppr[downbound][1]) + ":" + str(snppr[downbound][2]) + " and is cut by " + str(snppr[downbound][0]) +"."
+ print ""
 
-
+cwd = os.getcwd()
+r.assign("cwd", cwd)
+save = raw_input("Would you like to save the chromosome map? (yes/no): ")
+if save == "yes" or save == "y":
+	filename = []
+	filename.append(raw_input("What would you like to name the file (do not include filetype extension): "))
+	filename.append(".png")
+	filename = "".join(filename)
+else:
+	filename = "standinfilename.png"
+cwd = os.getcwd()
+r.assign("cwd", cwd)
+r.assign("filename", filename)
+r("source('RPlottingScript.R')")
 
 
 
