@@ -60,4 +60,3 @@ def getter():
 	for i in range(len(indices)):
 		finalEnzList.append(enzlist[indices[i]])
 	return finalEnzList
-

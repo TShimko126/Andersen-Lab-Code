@@ -1,5 +1,6 @@
 import urllib2, re, string, csv, os
 from rpy2.robjects import r as r
+from PIL import Image
 from EnzymeGetter import getter as getter
 
 
@@ -37,13 +38,15 @@ if reg == True:
 
 #Get enzyme list
 choice = raw_input("How would you like to choose restriction enzymes? (file/list/standards): ")
+
 if choice == "file":
     import tkFileDialog
     filename = tkFileDialog.askopenfilename()
-    enz = open(filename, "r")
-    enz = enz.readline()
+    file = open(filename, "r")
+    enz = file.readline()
     enz = re.sub(" ","",enz)
     enz = enz.split(",")
+    file.close()
 
 if choice == "list":    
     enz = raw_input("Which enzymes would you like to use? (Use proper capitalization, separate with commas): ")
@@ -51,15 +54,12 @@ if choice == "list":
     enz = enz.split(",")
 
 
-
-
-
-cutsites = {}
+cutsites = []
 
 #Define function to get cut sites from Rebase (maintained by NEB)
 def cutFinder(enzList):
-    for i in enzList:
-        dbAddress = "http://rebase.neb.com/rebase/enz/"+i+".html"
+    for i in range(len(enzList)):
+        dbAddress = "http://rebase.neb.com/rebase/enz/"+enzList[i]+".html"
         head = {'User-Agent': 'Mozilla/5.0'}
         page = urllib2.Request(dbAddress, headers = head)
         page2 = urllib2.urlopen(page)
@@ -68,26 +68,50 @@ def cutFinder(enzList):
         rsite = rsite.group()
         rsite = re.sub("\^", "", rsite)
         rsite = re.sub("[<>]+", "", rsite)
-        print i + " - " + rsite
-        cutsites[i] = rsite
+        print enzList[i] + " - " + rsite
+        cutsites.append([enzList[i], rsite])
 
 #Call function to get cut sites
+print ""
+print "Getting the enzyme cut sites..."
+
 if choice == "file" or choice == "list":
 	cutFinder(enz)
 
 if choice == "standards":
-	enz = getter()
-	for i in range(len(enz)):
-		cutsites[enz[i][0]] = enz[i][1]
-		
-print cutsites
+	cutsites = getter()
+
+
+print ""
+print "Checking for and removing isoschizomers..."
+
+finalSites = []
+seen = []
+for i in range(len(cutsites)):
+	if cutsites[i][1] in seen:
+		continue
+	else:
+		seen.append(cutsites[i][1])
+		finalSites.append(cutsites[i])
+
+cutsites = finalSites
+
+
+
+	
 
 #Import SNP file and make first line (strain names) a list
+print ""
+print "Importing necessary files..."
+
 inSNP = open("SNPsetfixed.txt","r")
 SNPline = inSNP.readline()
 SNPlist = SNPline.split()
 
 #Import genome
+print ""
+print "Importing the genome..."
+
 CHR1 = open("ChrInospace.txt", "r")
 CHR1list = CHR1.read()
 CHR2 = open("ChrIInospace.txt", "r")
@@ -108,24 +132,26 @@ CHR4list2 = re.sub(r'\s', '', CHR4list)
 CHR5list2 = re.sub(r'\s', '', CHR5list)
 CHRXlist2 = re.sub(r'\s', '', CHRXlist)
 
-print ""
+
 
 #Get two strains for comparison
+print ""
+print "Please enter the strains you would like to use."
 strain = raw_input("Input strain 1: ")
 strain2 = raw_input("Input strain 2: ")
 query = SNPlist.index(strain)
 reference = SNPlist.index(strain2)
 
-#Define function to get all snip-snip sites on the chromosome
+#Define function to get all snipSNP sites on the chromosome
 def getSites():
     snipSNPs = []
     snipList = []
     SNPset = open("SNPsetfixed.txt","r")
     SNPline2 = SNPset.readline()
     SNPlist2 = SNPline2.split()
-    for site in cutsites:
+    for entry in range(len(cutsites)):
         rsite = ""
-        cutter = cutsites[site]
+        cutter = cutsites[entry][1]
         for i in cutter:
             if i == "A":
                 rsite += "A"
@@ -208,7 +234,7 @@ def getSites():
                         cut2 = 1
                     if cut1 != cut2:
                         #If it's a snip-SNP, add enzyme and position data to list
-                        row = [site, chrom, basepair]
+                        row = [cutsites[entry][0], chrom, basepair]
                         snipSNPs.append(row)
             #Reopen file (python prevents looping through an open file multiple times)
             SNPset = open("SNPsetfixed.txt","r")
@@ -216,7 +242,9 @@ def getSites():
             SNPlist2 = SNPline2.split()
     return snipSNPs
 
-#Call getSites and return the array of all snip-SNPs with requested enzymes    
+#Call getSites and return the array of all snip-SNPs with requested enzymes  
+print ""
+print "Looking for snipSNP sites between", strain, "and", strain2 + "..."
 snppr = getSites()
 
 #Initialize lists needed for finding the closest snip-SNPs
@@ -226,37 +254,53 @@ distancedown = []
 
 #Find the closest snip-SNPs if position is entered
 if position == True:
-    upst = []
-    downst = []
-    for element in snppr:
-        dist = int(element[2]) - int(locat)
-        distance.append(dist)
-    for i in distance: 
-        if i < 0:
-            upst.append(i)
-        if i > 0:
-            downst.append(i)
-    upbound = distance.index(max(upst))
-    downbound = distance.index(min(downst))
-    
-    print ""
-    print "The closest upstream snip-SNP is located at position " + str(snppr[upbound][1]) + ":" + str(snppr[upbound][2]) + " and is cut by " + str(snppr[upbound][0]) +"."
-    print "The closest downstream snip-SNP is located at position " + str(snppr[downbound][1]) + ":" + str(snppr[downbound][2]) + " and is cut by " + str(snppr[downbound][0]) +"."        
-    print ""
-
-#Find the closest snip-SNPs if a region is entered
-if reg == True:
+ print ""
+ print "Looking for sites closest to the entered position..."
  file = open("cutsiteslist.csv", "wb")
  writer = csv.writer(file)
  writer.writerow(["Enzyme", "Position"])
  upst = []
  downst = []
  for element in snppr:
-	 print "element", element
+	 dist = int(element[2]) - int(locat)
+	 distance.append(dist)
+ for i in distance: 
+	 if i < 0:
+		 upst.append(i)
+		 upst2 = upst
+		 upst2.sort(reverse = True)
+	 if i > 0:
+		 downst.append(i)
+		 downst2 = downst
+		 downst2.sort()
+		
+ localSites = []
+ for i in range(5):
+	 upper = distance.index(upst2[4-i])
+	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+	 localSites.append([snppr[upper][0], snppr[upper][2]])
+ for i in range(5):
+	 downer = distance.index(downst2[i])
+	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+	 localSites.append([snppr[downer][0], snppr[downer][2]])
+	
+ file.close()	
+ 
+ upbound = distance.index(max(upst))
+ downbound = distance.index(min(downst))
+
+#Find the closest snip-SNPs if a region is entered
+if reg == True:
+ print ""
+ print "Looking for sites closest to the entered position..."
+ file = open("cutsiteslist.csv", "wb")
+ writer = csv.writer(file)
+ writer.writerow(["Enzyme", "Position"])
+ upst = []
+ downst = []
+ for element in snppr:
 	 distup = int(element[2]) - int(upstream)
-	 print "distup", distup
 	 distdown = int(element[2]) - int(downstream)
-	 print "distdown", distdown
 	 distanceup.append(distup)
 	 distancedown.append(distdown)
  for i in distanceup: 
@@ -269,36 +313,22 @@ if reg == True:
 		 downst.append(i)
 		 downst2 = downst
 		 downst2.sort()
- print ""		 
- print "upst", upst
- print ""
- print "downst", downst
- print ""
+
+ localSites = []
  for i in range(5):
-	 upper = distanceup.index(upst2[i])
-	 print "upper", upper
-	 print ""
-	 downer = distancedown.index(downst2[i])
-	 print "downer", downer
-	 print ""
-	 print "snppr[upper]", snppr[upper]
-	 print ""
-	 print "snppr[downer]", snppr[downer]
-	 print ""
+	 upper = distanceup.index(upst2[4-i])
 	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+	 localSites.append([snppr[upper][0], snppr[upper][2]])
+ for i in range(5):
+	 downer = distancedown.index(downst2[i])
 	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+	 localSites.append([snppr[downer][0], snppr[downer][2]])
 	
  file.close()
 
  upbound = distanceup.index(max(upst))
  downbound = distancedown.index(min(downst))
     
-    
-    
- print ""
- print "The closest upstream snip-SNP is located at position " + str(snppr[upbound][1]) + ":" + str(snppr[upbound][2]) + " and is cut by " + str(snppr[upbound][0]) +"."
- print "The closest downstream snip-SNP is located at position " + str(snppr[downbound][1]) + ":" + str(snppr[downbound][2]) + " and is cut by " + str(snppr[downbound][0]) +"."
- print ""
 
 cwd = os.getcwd()
 r.assign("cwd", cwd)
@@ -310,12 +340,26 @@ if save == "yes" or save == "y":
 	filename = "".join(filename)
 else:
 	filename = "standinfilename.png"
+
+print ""
+print "Plotting the 10 closest sites..."
 cwd = os.getcwd()
 r.assign("cwd", cwd)
 r.assign("filename", filename)
 r("source('RPlottingScript.R')")
 
+cd = "cd " + cwd
+os.system(cd)
+preview = "open -a preview " + filename
+os.system(preview)
 
+print ""
+use = raw_input("Which site numbers would you like to use? (separate with commas):")
+use = re.sub(" ", "", use)
+use = use.split(",")
+[int(i) for i in use]
+for site in use:
+	print localSites[use]
 
 
 
