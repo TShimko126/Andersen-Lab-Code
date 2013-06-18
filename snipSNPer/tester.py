@@ -1,16 +1,13 @@
-import os
-from rpy2.robjects import r as r
-cwd = os.getcwd()
-r.assign("cwd", cwd)
-save = raw_input("Would you like to save the chromosome map? (yes/no): ")
-if save == "yes" or save == "y":
-	filename = []
-	filename.append(raw_input("What would you like to name the file (do not include filetype extension): "))
-	filename.append(".png")
-	filename = "".join(filename)
-else:
-	filename = "standinfilename.png"
-cwd = os.getcwd()
-r.assign("cwd", cwd)
-r.assign("filename", filename)
-r("source('RPlottingScript.R')")
+import re
+
+
+print ""
+use = raw_input("Which site numbers would you like to use? (separate with commas):")
+use = re.sub(" ", "", use)
+use = use.split(",")
+for i in range(len(use)):
+	use[i] = int(use[i])
+print use
+print type(use[1])
+for site in use:
+	print localSites[use]
