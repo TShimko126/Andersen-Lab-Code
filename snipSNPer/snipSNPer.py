@@ -1,7 +1,8 @@
 import urllib2, re, string, csv, os
 from rpy2.robjects import r as r
-from PIL import Image
 from EnzymeGetter import getter as getter
+from Bio.Emboss.Applications import Primer3Commandline as P3CL
+from Bio.Emboss.Primer3 import parse
 
 
 #Get position
@@ -29,6 +30,7 @@ if len(pos) <= 2:
 else:
     position = False
     reg = True
+    
 #Get position/region data
 if position == True:
     locat = int(pos[1])
@@ -201,27 +203,21 @@ def getSites():
                     if location2[0] == "I":      
                         context = CHR1list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR1list2[basepair:basepair+length2]
                         newcontext = CHR1list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR1list2[basepair:basepair+length2]
-                        region = CHR1list2[basepair-500:basepair+500]
                     if location2[0] == "II":      
                         context = CHR2list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR2list2[basepair:basepair+length2]
                         newcontext = CHR2list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR2list2[basepair:basepair+length2]
-                        region = CHR2list2[basepair-500:basepair+500]
                     if location2[0] == "III":      
                         context = CHR3list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR3list2[basepair:basepair+length2]
                         newcontext = CHR3list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR3list2[basepair:basepair+length2]
-                        region = CHR3list2[basepair-500:basepair+500]
                     if location2[0] == "IV":      
                         context = CHR4list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR4list2[basepair:basepair+length2]
                         newcontext = CHR4list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR4list2[basepair:basepair+length2]
-                        region = CHR4list2[basepair-500:basepair+500]
                     if location2[0] == "V":      
                         context = CHR5list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR5list2[basepair:basepair+length2]
                         newcontext = CHR5list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR5list2[basepair:basepair+length2]
-                        region = CHR5list2[basepair-500:basepair+500]
                     if location2[0] == "X":      
                         context = CHRXlist2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHRXlist2[basepair:basepair+length2]
                         newcontext = CHRXlist2[basepair-length:basepair-1]+SNPlist2[query+1]+CHRXlist2[basepair:basepair+length2]
-                        region = CHRXlist2[basepair-500:basepair+500]
 
                     #Is it in a restriction site?
                     cut1 = 0
@@ -234,7 +230,7 @@ def getSites():
                         cut2 = 1
                     if cut1 != cut2:
                         #If it's a snip-SNP, add enzyme and position data to list
-                        row = [cutsites[entry][0], chrom, basepair]
+                        row = [cutsites[entry][0], chrom, basepair, rsite]
                         snipSNPs.append(row)
             #Reopen file (python prevents looping through an open file multiple times)
             SNPset = open("SNPsetfixed.txt","r")
@@ -278,16 +274,13 @@ if position == True:
  for i in range(5):
 	 upper = distance.index(upst2[4-i])
 	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
-	 localSites.append([snppr[upper][0], snppr[upper][2]])
+	 localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3]])
  for i in range(5):
 	 downer = distance.index(downst2[i])
 	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
-	 localSites.append([snppr[downer][0], snppr[downer][2]])
+	 localSites.append([snppr[downer][0], snppr[downer][2], snppr[upper][3]])
 	
- file.close()	
- 
- upbound = distance.index(max(upst))
- downbound = distance.index(min(downst))
+ file.close()
 
 #Find the closest snip-SNPs if a region is entered
 if reg == True:
@@ -318,18 +311,15 @@ if reg == True:
  for i in range(5):
 	 upper = distanceup.index(upst2[4-i])
 	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
-	 localSites.append([snppr[upper][0], snppr[upper][2]])
+	 localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3]])
  for i in range(5):
 	 downer = distancedown.index(downst2[i])
 	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
-	 localSites.append([snppr[downer][0], snppr[downer][2]])
+	 localSites.append([snppr[downer][0], snppr[downer][2], snppr[upper][3]])
 	
  file.close()
-
- upbound = distanceup.index(max(upst))
- downbound = distancedown.index(min(downst))
     
-
+#Map the snip-SNP sites in relation to the region or position of interest
 cwd = os.getcwd()
 r.assign("cwd", cwd)
 save = raw_input("Would you like to save the chromosome map? (yes/no): ")
@@ -340,7 +330,6 @@ if save == "yes" or save == "y":
 	filename = "".join(filename)
 else:
 	filename = "standinfilename.png"
-
 print ""
 print "Plotting the 10 closest sites..."
 cwd = os.getcwd()
@@ -348,18 +337,87 @@ r.assign("cwd", cwd)
 r.assign("filename", filename)
 r("source('RPlottingScript.R')")
 
+#Open the plot to front of screen
 cd = "cd " + cwd
 os.system(cd)
 preview = "open -a preview " + filename
 os.system(preview)
 
+#Determine which sites will be used
 print ""
 use = raw_input("Which site numbers would you like to use? (separate with commas):")
+filename = raw_input("What would you like to name the output file (do not include filetype extension): ")
+filename = filename + ".csv"
+finalCSV = open(filename, "wb")
+writer = csv.writer(finalCSV)
+writer.writerow(["Enzyme", "Position", "Forward Primer", "Reverse Primer", "Cut Strain", "Cut Band 1 Size", "Cut Band 2 Size", "Uncut Strain", "Full Band Size"])
 use = re.sub(" ", "", use)
 use = use.split(",")
-[int(i) for i in use]
+for i in range(len(use)):
+	use[i] = int(use[i])
+	use[i] = use[i]-1
 for site in use:
-	print localSites[use]
+	enzymeName = localSites[site][0]
+	basepair = localSites[site][1]
+	recognitionSite = localSites[site][2]
+	length = len(recognitionSite)
+	length2 = len(recognitionSite)
+	if chrom == "I":
+		context = CHR1list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR1list2[basepair:basepair+length2]
+		newcontext = CHR1list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR1list2[basepair:basepair+length2]
+		region = CHR1list2[basepair-700:basepair+700]
+	if chrom == "II":
+		context = CHR2list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR2list2[basepair:basepair+length2]
+		newcontext = CHR2list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR2list2[basepair:basepair+length2]
+		region = CHR2list2[basepair-700:basepair+700]
+	if chrom == "III":
+		context = CHR3list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR3list2[basepair:basepair+length2]
+		newcontext = CHR3list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR3list2[basepair:basepair+length2]
+		region = CHR3list2[basepair-700:basepair+700]
+	if chrom == "IV":
+		context = CHR4list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR4list2[basepair:basepair+length2]
+        newcontext = CHR4list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR4list2[basepair:basepair+length2]
+        region = CHR4list2[basepair-700:basepair+700]
+	if chrom == "V":
+		context = CHR5list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR5list2[basepair:basepair+length2]
+		newcontext = CHR5list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR5list2[basepair:basepair+length2]
+		region = CHR5list2[basepair-700:basepair+700]
+	if chrom == "X":
+		context = CHRXlist2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHRXlist2[basepair:basepair+length2]
+		newcontext = CHRXlist2[basepair-length:basepair-1]+SNPlist2[query+1]+CHRXlist2[basepair:basepair+length2]
+		region = CHRXlist2[basepair-700:basepair+700]
+	cut1 = 0
+	cut2 = 0
+	present1 = bool(re.search(recognitionSite, context))
+	if present1 == True:
+		cutWorm = strain2
+		uncutWorm = strain
+	present2 = bool(re.search(recognitionSite, newcontext))
+	if present2 == True:
+		cutWorm = strain
+		uncutWorm = strain2
+	start = (basepair-10)-(basepair-700)
+	stop = (basepair+700)-(basepair+10)
+	primerMaker = P3CL()
+	primerMaker.set_parameter("-sequence", "%s" % (region))
+	primerMaker.set_parameter("-outfile", "out.pr3")
+	primerMaker.set_parameter("-productsizerange", "500,1200")
+	primerMaker.set_parameter("-target", "%s,%s" % (start,stop))
+    
+	primerMaker()
+	outfile = open("out.pr3", "r")
+	primer_record = parse(open_outfile)
+	primer = primer_record.primers[0]
+	fullBand = primer.size
+	finalCSV = open(filename, "wb")
+	writer = csv.writer(finalCSV)
+	writer.writerow([enzymeName, basepair, primer.forward_seq, primer.reverse_seq, cutWorm, band1, band2, uncutWorm, fullBand])
+	finalCSV.close()
+    
+    
+	
+	
+
 
 
 
