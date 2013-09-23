@@ -141,8 +141,8 @@ print ""
 print "Please enter the strains you would like to use."
 strain = raw_input("Input strain 1: ")
 strain2 = raw_input("Input strain 2: ")
-query = SNPlist.index(strain)
-reference = SNPlist.index(strain2)
+reference = SNPlist.index(strain)
+query = SNPlist.index(strain2)
 
 #Define function to get all snipSNP sites on the chromosome
 def getSites():
@@ -230,7 +230,7 @@ def getSites():
                         cut2 = 1
                     if cut1 != cut2:
                         #If it's a snip-SNP, add enzyme and position data to list
-                        row = [cutsites[entry][0], chrom, basepair, rsite]
+                        row = [cutsites[entry][0], chrom, basepair, rsite, cut1, cut2]
                         snipSNPs.append(row)
             #Reopen file (python prevents looping through an open file multiple times)
             SNPset = open("SNPsetfixed.txt","r")
@@ -271,14 +271,26 @@ if position == True:
 		 downst2.sort()
 		
  localSites = []
- for i in range(5):
-	 upper = distance.index(upst2[4-i])
-	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
-	 localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3]])
- for i in range(5):
-	 downer = distance.index(downst2[i])
-	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
-	 localSites.append([snppr[downer][0], snppr[downer][2], snppr[upper][3]])
+ if len(upst2) >= 5:
+     for i in range(5):
+         upper = distance.index(upst2[4-i])
+         writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+         localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3], snppr[upper][4]])
+ else:
+     for i in range(0, len(upst2)):
+         upper = distance.index(upst2[upst2.length()-i])
+         writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+         localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3], snppr[upper][4]])
+ if len(downst2) >= 5:
+     for i in range(5):
+         downer = distance.index(downst2[i])
+         writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+         localSites.append([snppr[downer][0], snppr[downer][2], snppr[downer][3], snppr[downer][4]])
+ else:
+     for i in range(0, len(downst2)):
+         downer = distance.index(downst2[i])
+         writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+         localSites.append([snppr[downer][0], snppr[downer][2], snppr[downer][3], snppr[downer][4]])
 	
  file.close()
 
@@ -291,6 +303,7 @@ if reg == True:
  writer.writerow(["Enzyme", "Position"])
  upst = []
  downst = []
+ regSize = int(downstream) - int(upstream)
  for element in snppr:
 	 distup = int(element[2]) - int(upstream)
 	 distdown = int(element[2]) - int(downstream)
@@ -308,14 +321,33 @@ if reg == True:
 		 downst2.sort()
 
  localSites = []
- for i in range(5):
-	 upper = distanceup.index(upst2[4-i])
-	 writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
-	 localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3]])
- for i in range(5):
-	 downer = distancedown.index(downst2[i])
-	 writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
-	 localSites.append([snppr[downer][0], snppr[downer][2], snppr[upper][3]])
+ if len(upst2) >= 5:
+     for i in range(5):
+	     upper = distanceup.index(upst2[4-i])
+	     writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+	     localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3], snppr[upper][4]])
+ else:
+     for i in range(0, len(upst2)):
+         upper = distanceup.index(upst2[upst2.length()-i])
+         writer.writerow([str(snppr[upper][0]), str(snppr[upper][2])])
+         localSites.append([snppr[upper][0], snppr[upper][2], snppr[upper][3], snppr[upper][4]])
+ if len(downst2) >= 5:
+     for i in range(5):
+	     downer = distancedown.index(downst2[i])
+	     writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+	     localSites.append([snppr[downer][0], snppr[downer][2], snppr[downer][3], snppr[downer][4]])
+ else:
+     for i in range(0, len(downst2)):
+         downer = distancedown.index(downst2[i])
+         writer.writerow([str(snppr[downer][0]), str(snppr[downer][2])])
+         localSites.append([snppr[downer][0], snppr[downer][2], snppr[downer][3], snppr[downer][4]])
+ for i in distanceup:
+     if i > 0 and i < regSize:
+         print i
+         inReg = distanceup.index(i)
+         print snppr[inReg]
+         writer.writerow([str(snppr[inReg][0]), str(snppr[inReg][2])])
+         localSites.append([snppr[inReg][0], snppr[inReg][2], snppr[inReg][3], snppr[inReg][4]])
 	
  file.close()
     
@@ -331,7 +363,7 @@ if save == "yes" or save == "y":
 else:
 	filename = "standinfilename.png"
 print ""
-print "Plotting the 10 closest sites..."
+print "Plotting the closest sites..."
 cwd = os.getcwd()
 r.assign("cwd", cwd)
 r.assign("filename", filename)
@@ -360,42 +392,14 @@ for site in use:
 	enzymeName = localSites[site][0]
 	basepair = localSites[site][1]
 	recognitionSite = localSites[site][2]
-	length = len(recognitionSite)
-	length2 = len(recognitionSite)
-	if chrom == "I":
-		context = CHR1list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR1list2[basepair:basepair+length2]
-		newcontext = CHR1list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR1list2[basepair:basepair+length2]
-		region = CHR1list2[basepair-700:basepair+700]
-	if chrom == "II":
-		context = CHR2list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR2list2[basepair:basepair+length2]
-		newcontext = CHR2list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR2list2[basepair:basepair+length2]
-		region = CHR2list2[basepair-700:basepair+700]
-	if chrom == "III":
-		context = CHR3list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR3list2[basepair:basepair+length2]
-		newcontext = CHR3list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR3list2[basepair:basepair+length2]
-		region = CHR3list2[basepair-700:basepair+700]
-	if chrom == "IV":
-		context = CHR4list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR4list2[basepair:basepair+length2]
-        newcontext = CHR4list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR4list2[basepair:basepair+length2]
-        region = CHR4list2[basepair-700:basepair+700]
-	if chrom == "V":
-		context = CHR5list2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHR5list2[basepair:basepair+length2]
-		newcontext = CHR5list2[basepair-length:basepair-1]+SNPlist2[query+1]+CHR5list2[basepair:basepair+length2]
-		region = CHR5list2[basepair-700:basepair+700]
-	if chrom == "X":
-		context = CHRXlist2[basepair-length:basepair-1]+SNPlist2[reference+1]+CHRXlist2[basepair:basepair+length2]
-		newcontext = CHRXlist2[basepair-length:basepair-1]+SNPlist2[query+1]+CHRXlist2[basepair:basepair+length2]
-		region = CHRXlist2[basepair-700:basepair+700]
-	cut1 = 0
-	cut2 = 0
-	present1 = bool(re.search(recognitionSite, context))
-	if present1 == True:
-		cutWorm = strain2
-		uncutWorm = strain
-	present2 = bool(re.search(recognitionSite, newcontext))
-	if present2 == True:
-		cutWorm = strain
-		uncutWorm = strain2
+	if localSites[site][4] == 0:
+		cutWorm = query
+		uncutWorm = reference
+	else:
+		cutWorm = reference
+		uncutWorm = query
+
+	region
 	start = (basepair-10)-(basepair-700)
 	stop = (basepair+700)-(basepair+10)
 	primerMaker = P3CL()
