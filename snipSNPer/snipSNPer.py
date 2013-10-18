@@ -1,8 +1,8 @@
 import urllib2, re, string, csv, os
 from rpy2.robjects import r as r
 from EnzymeGetter import getter as getter
-from Bio.Emboss.Applications import Primer3Commandline as P3CL
-from Bio.Emboss.Primer3 import parse
+# from Bio.Emboss.Applications import Primer3Commandline as P3CL
+# from Bio.Emboss.Primer3 import parse
 
 
 #Get position
@@ -256,7 +256,9 @@ if position == True:
  writer = csv.writer(file)
  writer.writerow(["Enzyme", "Position"])
  upst = []
+ upst2 = []
  downst = []
+ downst2 = []
  for element in snppr:
 	 dist = int(element[2]) - int(locat)
 	 distance.append(dist)
@@ -302,7 +304,9 @@ if reg == True:
  writer = csv.writer(file)
  writer.writerow(["Enzyme", "Position"])
  upst = []
+ upst2 = []
  downst = []
+ downst2 = []
  regSize = int(downstream) - int(upstream)
  for element in snppr:
 	 distup = int(element[2]) - int(upstream)
@@ -343,9 +347,7 @@ if reg == True:
          localSites.append([snppr[downer][0], snppr[downer][2], snppr[downer][3], snppr[downer][4]])
  for i in distanceup:
      if i > 0 and i < regSize:
-         print i
          inReg = distanceup.index(i)
-         print snppr[inReg]
          writer.writerow([str(snppr[inReg][0]), str(snppr[inReg][2])])
          localSites.append([snppr[inReg][0], snppr[inReg][2], snppr[inReg][3], snppr[inReg][4]])
 	
@@ -358,8 +360,11 @@ save = raw_input("Would you like to save the chromosome map? (yes/no): ")
 if save == "yes" or save == "y":
 	filename = []
 	filename.append(raw_input("What would you like to name the file (do not include filetype extension): "))
+	print filename
 	filename.append(".png")
-	filename = "".join(filename)
+	print filename
+	filename = "/Output/".join(filename)
+	print filename
 else:
 	filename = "standinfilename.png"
 print ""
@@ -380,9 +385,10 @@ print ""
 use = raw_input("Which site numbers would you like to use? (separate with commas):")
 filename = raw_input("What would you like to name the output file (do not include filetype extension): ")
 filename = filename + ".csv"
+filename = "/Output/".join(filename)
 finalCSV = open(filename, "wb")
-writer = csv.writer(finalCSV)
-writer.writerow(["Enzyme", "Position", "Forward Primer", "Reverse Primer", "Cut Strain", "Cut Band 1 Size", "Cut Band 2 Size", "Uncut Strain", "Full Band Size"])
+outputWriter = csv.writer(finalCSV)
+outputWriter.writerow(["Enzyme", "Position", "Cut Strain", "Uncut Strain", "Genomic Region"])
 use = re.sub(" ", "", use)
 use = use.split(",")
 for i in range(len(use)):
@@ -392,31 +398,55 @@ for site in use:
 	enzymeName = localSites[site][0]
 	basepair = localSites[site][1]
 	recognitionSite = localSites[site][2]
-	if localSites[site][4] == 0:
-		cutWorm = query
-		uncutWorm = reference
+	if localSites[site][3] == 0:
+		cutWorm = strain
+		uncutWorm = strain2
 	else:
-		cutWorm = reference
-		uncutWorm = query
+		cutWorm = strain2
+		uncutWorm = strain
 
-	region
-	start = (basepair-10)-(basepair-700)
-	stop = (basepair+700)-(basepair+10)
-	primerMaker = P3CL()
-	primerMaker.set_parameter("-sequence", "%s" % (region))
-	primerMaker.set_parameter("-outfile", "out.pr3")
-	primerMaker.set_parameter("-productsizerange", "500,1200")
-	primerMaker.set_parameter("-target", "%s,%s" % (start,stop))
-    
-	primerMaker()
-	outfile = open("out.pr3", "r")
-	primer_record = parse(open_outfile)
-	primer = primer_record.primers[0]
-	fullBand = primer.size
+	if chrom == "I":
+		region = CHR1list2[basepair-700:basepair+700]
+	if chrom == "II":
+		region = CHR2list2[basepair-700:basepair+700]
+	if chrom == "III":
+		region = CHR3list2[basepair-700:basepair+700]
+	if chrom == "IV":
+		region = CHR4list2[basepair-700:basepair+700]
+	if chrom == "V":
+		region = CHR5list2[basepair-700:basepair+700]
+	if chrom == "X":
+		region = CHRXlist2[basepair-700:basepair+700]
+
+	# start = (basepair-10)-(basepair-700)
+	# stop = (basepair+700)-(basepair+10)
+	# primerMaker = P3CL()
+	# primerMaker.set_parameter("-sequence", "%s" % (region))
+	# primerMaker.set_parameter("-outfile", "out.pr3")
+	# primerMaker.set_parameter("-productsizerange", "500,1200")
+	# primerMaker.set_parameter("-target", "%s,%s" % (start,stop))
+
+	# primerMaker()
+	# outfile = open("out.pr3", "r")
+	# primer_record = parse(open_outfile)
+	# primer = primer_record.primers[0]
+	# fullBand = primer.size
+
+	# print ""
+	# print "Fullband " + fullBand
 	finalCSV = open(filename, "wb")
 	writer = csv.writer(finalCSV)
-	writer.writerow([enzymeName, basepair, primer.forward_seq, primer.reverse_seq, cutWorm, band1, band2, uncutWorm, fullBand])
-	finalCSV.close()
+	outputWriter.writerow([enzymeName, basepair, cutWorm, uncutWorm, region])
+finalCSV.close()
+
+os.remove("ggplot.png")
+os.remove("standinfilename.png")
+os.remove("positionlist.csv")
+os.remove("cutsiteslist.csv")
+
+
+print ""
+print "Final file output to " + filename
     
     
 	
