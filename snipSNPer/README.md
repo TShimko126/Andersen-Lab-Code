@@ -13,19 +13,20 @@ Requirements:
 3. primer3
 4. Internet access
 
-Installation:
+##Installation:
+
 1. To install the required Python packages, use the pip installation tool by calling "$ sudo pip install [package name]" from the command line
 2. Install R with the ggplot2 package using install.pachages("ggplot2") from inside an R session
 3. Install primer 3 by downloading the latest version from http://primer3.sourceforge.net/releases.php
-	1. Follow installation instructions for *LINUX/UNIX, then MAC* on http://primer3.sourceforge.net/primer3_manual.htm#installLinux
-	*IT IS VERY IMPORTANT TO FOLLOW THE LINUX/UNIX INSTRUCTIONS FIRST, THEN THE MAC INSTRUCTIONS, OTHERWISE THE FILES NEEDED IN THE MAC INSTRUCTIONS WILL NOT EXIST*
+	1. Follow installation instructions for **LINUX/UNIX, then MAC** on http://primer3.sourceforge.net/primer3_manual.htm#installLinux
+	**IT IS VERY IMPORTANT TO FOLLOW THE LINUX/UNIX INSTRUCTIONS FIRST, THEN THE MAC INSTRUCTIONS, OTHERWISE THE FILES NEEDED IN THE MAC INSTRUCTIONS WILL NOT EXIST**
 	2. Copy the primer3_config folder in the downloaded primer3 folder into the /opt folder on the computer
 	3. To test, change directories into the downloaded primer3 folder and execute the command $ primer3_core -output=out.txt example
 	4. The out.txt file should contain no errors
 
 EVERY PROMPT IS CASE AND FORMAT SENSITIVE. IF SOMETHING ISN'T WORKING, MAKE SURE THE CASE AND FORMAT IS CORRECT.
 
-Instructions:
+##Instructions:
 
 1. When prompted, enter the the genomic point or region around which you are looking for snipSNP sites. Points and regions must be entered in the form chromosome:position (ex. I:1000000 for basepair 1000000 on chromosome I or I:1000000..1100000 for the region from 1000000 to 1100000 on chromosome 1).
 
