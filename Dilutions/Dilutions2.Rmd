@@ -7,38 +7,56 @@ compound = readRDS("compound.rds")
 ```
 Dilution Sheet for `r compound`
 ========================================================
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 #Determine whether a stock needs to be made
 stockmake = readRDS("stockmake.rds")
 #Get the recipe
 recipe = readRDS("recipe.rds")
 #See if the stock solution is contrated enough to make any of the dilutions
 brake = readRDS("brake.rds")
-#Convert the lysate mixture column to character to prevent rounding
-recipe[,3] = as.character(recipe[,3])
+
+#Round the recipe columns to pipettable volumes
+roundVolume = function(x){
+    if(x <= 2){
+        return(as.character(round(x,3)))
+    } else if(x <= 20){
+        return(as.character(round(x,2)))
+    } else if(x <= 200){
+        return(as.character(round(x,1)))
+    } else {
+        return(as.character(round(x,0)))
+    }    
+}
 
 #Get the raw amounts for the lysate and s medium
-rawLysate = sum(as.numeric(as.character(recipe[,5])))
-rawSmed = sum(as.numeric(as.character(recipe[,3])))
+recipe[,5] = as.numeric(as.character(recipe[,5]))
+recipe[,3] = as.numeric(as.character(recipe[,3]))
+rawLysate = as.numeric(as.character(5*recipe[1,5]))
+rawSmed = as.numeric(as.character(5*recipe[1,3]))
 
 #Adjust for pipetiing error (make a little extra)
 adjLysate = rawLysate * (1+(1/60))
 tot = adjLysate * 10
 adjSmed = tot - adjLysate
-slmix = paste("Dilute", adjLysate, "µL lysate in", adjSmed, "µL S medium.")
+slmix = paste(round(adjLysate + adjSmed,0), " µL.")
+
+#Round the recipe values
+recipe[,c(3,4,6)] = sapply(recipe[,c(3,4,6)], roundVolume)
 
 #Space out the columns by adding spaces in the column titles
 for (i in seq(1,length(recipe))){
   colnames(recipe)[i] = sprintf("%03s",colnames(recipe)[i])
 }
 ```
+
 Make concentrated stock solution:
 
 ```{r, echo = FALSE}
 stockmake
 ```
 
-Make the S Medium/Lysate mix:
+Total the S Medium/Lysate mix:
+
 ```{r, echo = FALSE}
 slmix
 ```
@@ -59,7 +77,7 @@ Use higher stock (if necessary):
 ```{r, echo = FALSE}
 if (file.exists("highRecipe.rds") == TRUE){
   highRecipe = readRDS("highRecipe.rds")
-  highRecipe[,3] = as.character(highRecipe[,3])
+  highRecipe[,c(3,4,6)] = sapply(highRecipe[,c(3,4,6)], roundVolume)
   print(highRecipe[,c(1,2,3,4,6)])
 }
 if (file.exists("highRecipe.rds") == FALSE){

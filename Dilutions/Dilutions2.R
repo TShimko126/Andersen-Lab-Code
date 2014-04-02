@@ -1,5 +1,5 @@
 #Set working directory to wherever Dilutions2.Rmd and DrugDoseReponses.csv are located
-setwd("/Users/tylershimko/Desktop/Dose_Response_Dilution_Calculator")
+#setwd("/Users/tylershimko/Desktop/Dose_Response_Dilution_Calculator")
 
 
 #Function to determine miligrams necessary to make stock solution
@@ -15,9 +15,7 @@ dilute = function(startConc, finConc, volume){
 }
 
 #Function to make set of necessary dilutions 
-makeDilute = function(dilutions, stock){
-  #ste the total volume needed
-  volume = 1200
+makeDilute = function(dilutions, stock, volume){
   ul = c()
   #Caluculate the dilution for each of the requested dilutions
   for (i in seq(1,length(dilutions))){
@@ -48,6 +46,8 @@ curves = read.csv("DrugDoseResponses.csv")
 #Clean up the curves data so that only rows with complete, valid entries are used
 curves2 = curves[curves[,5] != "" & curves[,3] != "NA" & curves[,4] != "",]
 curves2 = curves2[is.na(curves2[,1]) == FALSE,]
+
+volume = as.numeric(as.character(readline("What volume would you like to use? (in uL): ")))
 
 #Initialize 
 for (i in seq(1,nrow(curves2))){
@@ -85,7 +85,7 @@ for (i in seq(1,nrow(curves2))){
   count = c()
   for (j in seq(1,length(tenfolds))) {
     #Create a recipe data frame for each of the 10 fold dilutions listed above
-    recipe = as.data.frame(makeDilute(dilutes,tenfolds[j]))
+    recipe = as.data.frame(makeDilute(dilutes,tenfolds[j],volume))
     #Count the total dilution amounts and check how many fall in our magic range of 0.5<x<12, 12 is 1% of the 1200 uL volume we are making up
     count[j] = sum(as.numeric(as.character(recipe[,4])) >=.5 & as.numeric(as.character(recipe[,4])) <= 12)
   }
@@ -108,13 +108,13 @@ for (i in seq(1,nrow(curves2))){
   }
   
   #Make the recipe
-  recipe = as.data.frame(makeDilute(dilutes,stock2))
+  recipe = as.data.frame(makeDilute(dilutes,stock2, volume))
   
   goodrows = c()
   tooHigh = c()
   #Check which rows have under 1% diluent and which have over
   for (k in seq(1,nrow(recipe))){
-    if (as.numeric(as.character(recipe[k,4])) <= 12 & as.numeric(as.character(recipe[k,4])) >= .5 | as.numeric(as.character(recipe[k,4])) == 0){
+    if (as.numeric(as.character(recipe[k,4])) <= 12 & as.numeric(as.character(recipe[k,4])) >= .2 | as.numeric(as.character(recipe[k,4])) == 0){
       goodrows = append(goodrows, as.numeric(k))
     }
     if (as.numeric(as.character(recipe[k,4])) > 12){
@@ -141,10 +141,10 @@ for (i in seq(1,nrow(curves2))){
     #For each of the higher concentrated stocks, see if all of the more concentrated solutions fall in the magic range
     workStocks = c()
     for (l in seq(1,length(higherStocks))){
-      highRecipe = as.data.frame(makeDilute(higherConcs,higherStocks[l]))
+      highRecipe = as.data.frame(makeDilute(higherConcs,higherStocks[l],volume))
       highRecipe[,2:5] = sapply(highRecipe[,2:5],as.character)
       highRecipe[,2:5] = sapply(highRecipe[,2:5],as.numeric)
-      if (all(highRecipe[,4] >= .5) & all(highRecipe[,4] <= 12)){
+      if (all(highRecipe[,4] >= .2) & all(highRecipe[,4] <= 12)){
         workStocks = append(workStocks, higherStocks[l])
       }
     }
@@ -153,7 +153,7 @@ for (i in seq(1,nrow(curves2))){
     finalHigherStock = min(workStocks)
     
     #Make the recipe for the higher concentrations
-    highRecipe = as.data.frame(makeDilute(higherConcs, finalHigherStock))
+    highRecipe = as.data.frame(makeDilute(higherConcs, finalHigherStock, volume))
     for (row in seq(1,nrow(highRecipe))){
       for (j in seq(2,length(highRecipe))){
         highRecipe[row,j] = as.numeric(as.character(highRecipe[row,j]))
