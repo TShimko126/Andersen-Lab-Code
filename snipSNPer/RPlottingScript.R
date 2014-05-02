@@ -17,5 +17,3 @@ if (length(positions[,1]) == 1){
 
 
 ggsave(filename = filename, plot = plot, width = 246.327083333, height = 137.31875, units = "mm")
-
-ggsave(filename = "ggplot.png", plot = plot, width = 246.327083333, height = 137.31875, units = "mm")

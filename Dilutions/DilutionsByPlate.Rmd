@@ -1,0 +1,30 @@
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width=200)
+```
+```{r, echo = FALSE}
+#Get the compound name
+compound = readRDS("drug.rds")
+```
+Dilution Sheet for `r compound`
+========================================================
+```{r, echo=FALSE}
+stock = readRDS("stockDilution.rds")
+slmix = readRDS("lysateMixRec.rds")
+addDrug = readRDS("addDrug.rds")
+```
+Dilute concentrated stock if necessary:
+```{r, echo = FALSE}
+stock
+```
+
+Make the S Medium/Lysate mix:
+```{r, echo = FALSE}
+slmix
+```
+
+Add drug:
+
+```{r, echo = FALSE}
+addDrug
+```
+
