@@ -75,12 +75,23 @@ for (i in seq(1,nrow(curves2))){
     #This section checks a series of ten-fold dilutions to see which stock concentration is most effecient at creating a dilution curve that is "pipettable" (not pipetting less than .5 ul), and not above 1% diluent so as to control for diluent effects
     tenfolds = c(stock1/10000, stock1/1000, stock1/100, stock1/10, stock1)
     count = c()
-    for (j in seq(1,length(tenfolds))) {
-        #Create a recipe data frame for each of the 10 fold dilutions listed above
-        recipe = as.data.frame(makeDilute(dilutes,tenfolds[j],volume))
-        #Count the total dilution amounts and check how many fall in our magic range of 0.5<x<12, 12 is 1% of the 1200 uL volume we are making up
-        count[j] = sum(as.numeric(as.character(recipe[,4])) >=.5 & as.numeric(as.character(recipe[,4])) <= concVolume)
+    
+    if(solvent != "K medium"){
+        for (j in seq(1,length(tenfolds))) {
+            #Create a recipe data frame for each of the 10 fold dilutions listed above
+            recipe = as.data.frame(makeDilute(dilutes,tenfolds[j],volume))
+            #Count the total dilution amounts and check how many fall in our magic range of 0.5<x<12, 12 is 1% of the 1200 uL volume we are making up
+            count[j] = sum(as.numeric(as.character(recipe[,4])) >=.2 & as.numeric(as.character(recipe[,4])) <= concVolume)
+        }
+    } else {
+        for (j in seq(1,length(tenfolds))) {
+            #Create a recipe data frame for each of the 10 fold dilutions listed above
+            recipe = as.data.frame(makeDilute(dilutes,tenfolds[j],volume))
+            #Count the total dilution amounts and check how many fall in our magic range of 0.5<x<12, 12 is 1% of the 1200 uL volume we are making up
+            count[j] = sum(as.numeric(as.character(recipe[,4])) >= .2 & concVolume - as.numeric(as.character(recipe[,4])) >= 0)
+        }
     }
+    
     #Check if all of the counts are zero, if this is true, you cannot make of the dilutions with the stock concentration you already have
     if (all(count == 0L) == TRUE){
         #Sets brake variable equal to TRUE, this is used in the markdown file to tell us that our stock is not concentrated enough for this curve
@@ -97,18 +108,31 @@ for (i in seq(1,nrow(curves2))){
     #Make the recipe
     recipe = as.data.frame(makeDilute(dilutes,stock2, volume))
     
+
     goodrows = c()
     tooHigh = c()
-    #Check which rows have under 1% diluent and which have over
-    for (k in seq(1,nrow(recipe))){
-        if (as.numeric(as.character(recipe[k,4])) <= concVolume & as.numeric(as.character(recipe[k,4])) >= .2 | as.numeric(as.character(recipe[k,4])) == 0){
-            goodrows = append(goodrows, as.numeric(k))
+    
+    if(solvent != "K medium"){
+        #Check which rows have under 1% diluent and which have over
+        for (k in seq(1,nrow(recipe))){
+            if (as.numeric(as.character(recipe[k,4])) <= concVolume & as.numeric(as.character(recipe[k,4])) >= .2 | as.numeric(as.character(recipe[k,4])) == 0){
+                goodrows = append(goodrows, as.numeric(k))
+            }
+            if (as.numeric(as.character(recipe[k,4])) > concVolume){
+                tooHigh = append(tooHigh, as.numeric(k))
+            }
         }
-        if (as.numeric(as.character(recipe[k,4])) > concVolume){
-            tooHigh = append(tooHigh, as.numeric(k))
+    } else {
+        #Check which rows have under 1% diluent and which have over
+        for (k in seq(1,nrow(recipe))){
+            if (as.numeric(as.character(recipe[k,4])) >= .2 & concVolume - as.numeric(as.character(recipe[,4])) >= 0){
+                goodrows = append(goodrows, as.numeric(k))
+            } else {
+                tooHigh = append(tooHigh, as.numeric(k))
+            }
         }
     }
-    
+        
     #Separate the rows
     high = recipe[tooHigh,]
     recipe = recipe[goodrows,]
@@ -192,8 +216,6 @@ for (i in seq(1,nrow(curves2))){
         highRecipe[,6] = concVolume - as.numeric(highRecipe[,4])
         highRecipe[,3] = volume - concVolume
     } else {
-        nrowR = nrow(recipe)
-        nrowHR = 0
         maxDiluentAmount = max(recipe[,4])
         totalMedium = round(adjLysate + adjSmed,0)
         stockDiluentAmount = ((concentration/100)*totalMedium) - (maxDiluentAmount * (nrow(recipe)))

@@ -11,13 +11,23 @@ Dilution Sheet for `r compound`
 stock = readRDS("stockDilution.rds")
 slmix = readRDS("lysateMixRec.rds")
 addDrug = readRDS("addDrug.rds")
+dilConc = readRDS("dilConc.rds")
 ```
+
 Stock concentration:
+
 ```{r, echo = FALSE}
 stock
 ```
 
+Final diluent concentration:
+
+```{r, echo = FALSE}
+dilConc
+```
+
 Make the S Medium/Lysate mix:
+
 ```{r, echo = FALSE}
 slmix
 ```

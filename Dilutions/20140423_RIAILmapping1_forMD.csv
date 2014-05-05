@@ -1,0 +1,24 @@
+Compound,NumberWells,NumberPlates,StartingConc,FinalConc
+carmustine,53.57143,1,100,250
+chlorothanil,53.57143,1,75,250
+daunorubicin hydrochloride,53.57143,1,450,250
+docetaxel,53.57143,1,31,5
+etoposide,53.57143,1,250,500
+fluoxetine hydrochloride125,53.57143,1,179.3,125
+fluoxetine hydrochloride250,53.57143,1,179.3,250
+irinotecan,53.57143,1,250,125
+methotrexate62.5,53.57143,1,100,62.5
+methotrexate125,53.57143,1,100,125
+thiabendazole62.5,53.57143,1,100,62.5
+thiabendazole125,53.57143,1,100,125
+tunicamycin,53.57143,1,20,10
+abamectin,53.57143,1,10,5
+albendazole,53.57143,1,100,12.5
+amsacrine hydrochloride,53.57143,1,125,100
+bortezomib,53.57143,1,25,2
+chlorpyrifos,53.57143,1,2.5,1
+dactinomycin,53.57143,1,20,25
+fenbendazole15,53.57143,1,100,15
+fenbendazole30,53.57143,1,100,30
+mebendazole,53.57143,1,100,20
+topotecan hydrochloride hydrate,53.57143,1,40,400
