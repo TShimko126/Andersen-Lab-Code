@@ -20,18 +20,18 @@ makePlates = function(drug, numWells, numPlates, startConc, finConc){
   volume = (50*numWells)*numPlates
   adjVolume = 1.12*volume
   ulDrug = dilute(stock1, finConc, adjVolume)
-  if (ulDrug<.5){
+  if (ulDrug<.25){
     tenfolds = c(stock1/10000, stock1/1000, stock1/100, stock1/10, stock1)
     for (i in seq(1,length(tenfolds))){
       newUl = dilute(tenfolds[i], finConc, adjVolume)
-      if (newUl>.5 & newUl<(.1*adjVolume)){
+      if (newUl>.25 & newUl<(.1*adjVolume)){
         newStock = tenfolds[i]
       }
     }
   }
   if (exists("newStock")){
     stockDilute = stock1/newStock
-    stockDilution = paste0("Make a ", stockDilute,"-fold dilution of the ", stock1/1000, " mM stock that is already made.")
+    stockDilution = paste0("Use ", stock1/1000, " mM stock.")
     ulDrug = dilute(newStock, finConc, adjVolume)
     stock = newStock/1000
   } else{

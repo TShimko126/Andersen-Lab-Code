@@ -12,7 +12,7 @@ stock = readRDS("stockDilution.rds")
 slmix = readRDS("lysateMixRec.rds")
 addDrug = readRDS("addDrug.rds")
 ```
-Dilute concentrated stock if necessary:
+Stock concentration:
 ```{r, echo = FALSE}
 stock
 ```
