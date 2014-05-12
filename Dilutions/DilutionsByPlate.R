@@ -6,26 +6,25 @@ setwd("~/Dropbox/HTA/Dilutions/2014 mapping/")
 
 
 #Edit this line to have your file name
-concs = read.csv("20140423_RIAILmapping1_forMD.csv")
+concs = read.csv("20140511_RIAILmapping1.csv")
 ##############
 
-
-a = c(1,2,3,4,5)
-
-concs[,6] = rep("DMSO", nrow(concs))
-concs[,7] = sample(a,23,replace = TRUE)
 
 #Dilution calculation
 dilute = function(startConc, finConc, volume){
     (finConc/startConc)*volume
 }
 
-makePlates = function(drug, numWells, numPlates, startConc, finConc, diluent, concentration){
+makePlates = function(drug, numWells, numPlates, startConc, finConc, diluent, concentration, vol){
     stock1 = startConc*1000
     drug1= paste0(as.character(drug)," - ", finConc, " µM")
     tenfolds = c(stock1/10000, stock1/1000, stock1/100, stock1/10, stock1)
-    volume = (50*numWells)*numPlates
-    adjVolume = 1.12*volume
+    if (is.na(vol)){
+        volume = (50*numWells)*numPlates
+        adjVolume = 1.12*volume
+    } else {
+        adjVolume = vol
+    }
     ulDrug = dilute(stock1, finConc, adjVolume)
     if (ulDrug<.25){
         tenfolds = c(stock1/10000, stock1/1000, stock1/100, stock1/10, stock1)
@@ -70,6 +69,13 @@ makePlates = function(drug, numWells, numPlates, startConc, finConc, diluent, co
     file.remove(madefiles)
 }
 
+answer = readline("Do you want to specify a volume to use? If not, the volume will be calculated by the number of wells specified in the .csv (y/n): ")
+if (answer == "y" || answer == "yes"){
+    vol = as.numeric(readline("Enter the volume you wish to use (in µL): "))
+} else {
+    vol = NA
+}
+
 for (i in seq(1,nrow(concs))){
     compound = as.character(concs[i,1])
     nwells = as.numeric(as.character(concs[i,2]))
@@ -78,21 +84,5 @@ for (i in seq(1,nrow(concs))){
     ficonc = as.numeric(as.character(concs[i,5]))
     diluent = concs[i,6]
     concentration = concs[i,7]
-    makePlates(compound,nwells,nplates,stconc,ficonc,diluent,concentration)
+    makePlates(compound,nwells,nplates,stconc,ficonc,diluent,concentration, vol)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
